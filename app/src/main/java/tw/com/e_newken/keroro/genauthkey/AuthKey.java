@@ -1,7 +1,11 @@
 package tw.com.e_newken.keroro.genauthkey;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -24,11 +28,21 @@ public class AuthKey {
 //        char reserved[12];
 //    };
 
-    public static final int LIMIT_PRJNAME = 15;
+
     //region final parameters
+    public static final int LIMIT_PRJNAME = 15;
+
+    private static final String TAG="AuthKey";
     private static final String AUTHKEY_ID = "AUTHKEY_CFG";
+    private static final int AUTHKEY_ID_BYTES = 16;
+    private static final int AUTHKEY_SIZE = 144;
     private static final int UUID_BYTES = 16;
 
+    //authkey flags
+    private static final int F_AUTHKEY_ENABLE = (1);
+    private static final int F_AUTHKEY_NO_KEYS = (1 << 8);
+    private static final int F_AUTHKEY_CRITICAL = (1 << 15);
+    private static final int F_AUTHKEY_LOCK = (1 << 16);
 
     //endregion
     //region private variables
@@ -39,7 +53,8 @@ public class AuthKey {
     private String enabledDate;
     private int keys;
     private int flags;
-    private int timestamp;
+    private long keypairTimestamp;
+    private int keypairKeyNum;
     //endregion
 
     //region Constructor
@@ -48,6 +63,10 @@ public class AuthKey {
             projectName = prjName.substring(0, LIMIT_PRJNAME - 1);
         } else {
             projectName = prjName;
+        }
+
+        if (numberOfKeys <= 0) {
+            throw new IllegalArgumentException("numberOfKeys <= 0");
         }
 
         UUID randomUUID = UUID.randomUUID();
@@ -65,9 +84,19 @@ public class AuthKey {
         keys = numberOfKeys;
         flags = 0;
 
+
     }
 
-    public AuthKey(String file, String aes_iv) {
+    public AuthKey(String file, String aes_iv) throws FileNotFoundException {
+        File fs = new File(file);
+
+        if (!fs.exists()) {
+            throw new FileNotFoundException();
+        }
+
+        if (aes_iv == null) {
+            throw new NullPointerException();
+        }
 
     }
     //endregion
@@ -97,9 +126,13 @@ public class AuthKey {
         return flags;
     }
 
-    public final int getTimestamp() {
-        return timestamp;
+    public final long getKeypairTimestamp() {
+        return keypairTimestamp;
     }
+
+    public final int getKeypairKeyNum() { return keypairKeyNum;}
+
+
     //endregion
 
     //region private functions
@@ -109,7 +142,18 @@ public class AuthKey {
     //endregion
 
     //region public functions
-    public boolean export(String file) {
+    public boolean export(String file, boolean overwrite) throws UnsupportedEncodingException {
+        File fs = new File(file);
+
+        if (fs.exists() && !overwrite)
+            return false;
+
+        ByteBuffer authkeyByteBuffer = ByteBuffer.allocate(AUTHKEY_SIZE);
+        authkeyByteBuffer.clear();
+
+        byte[] id = Arrays.copyOf(AUTHKEY_ID.getBytes("ISO-8859-1"), AUTHKEY_ID_BYTES);
+        authkeyByteBuffer.put(id);
+
         return true;
     }
     //endregion

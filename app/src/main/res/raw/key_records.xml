@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources platform="">
-    <key name="">
+    <authkey name="">
         <file></file>
         <aes_ks></aes_ks>
         <aes_iv></aes_iv>
@@ -9,6 +9,7 @@
         <created_date></created_date>
         <enabled_date></enabled_date>
         <key_number></key_number>
+        <flags></flags>
         <comment></comment>
         <latest_record></latest_record>
         <records>
@@ -19,5 +20,5 @@
                 <remainder_keys></remainder_keys>
             </record>
         </records>
-    </key>
+    </authkey>
 </resources>
