@@ -1,9 +1,16 @@
 package tw.com.e_newken.keroro.genauthkey;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by keroro on 2015/12/28.
  */
 public final class Utils {
+    //region private final
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    //endregion
+
     public static String bytesToHex(byte[] bytes) {
         final char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8',
                 '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -15,6 +22,12 @@ public final class Utils {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public static String getDateTime() {
+        Date date = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
+        return simpleDateFormat.format(date);
     }
 
 }

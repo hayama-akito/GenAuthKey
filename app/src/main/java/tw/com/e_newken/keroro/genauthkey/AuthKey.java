@@ -6,7 +6,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -32,11 +31,18 @@ public class AuthKey {
     //region final parameters
     public static final int LIMIT_PRJNAME = 15;
 
-    private static final String TAG="AuthKey";
+    private static final String TAG = "AuthKey";
     private static final String AUTHKEY_ID = "AUTHKEY_CFG";
-    private static final int AUTHKEY_ID_BYTES = 16;
+
     private static final int AUTHKEY_SIZE = 144;
-    private static final int UUID_BYTES = 16;
+    private static final int AUTHKEY_ID_BYTES = 16;
+    private static final int AUTHKEY_PRJNAME_BYTES = 16;
+    private static final int AUTHKEY_UUID_BYTES = 16;
+    private static final int AUTHKEY_DATETIME_BYTES = 32;
+    private static final int AUTHKEY_PADDING_BYTES = 12;
+
+
+    private static final String CHARSETENC = "ISO-8859-1";
 
     //authkey flags
     private static final int F_AUTHKEY_ENABLE = (1);
@@ -48,7 +54,7 @@ public class AuthKey {
     //region private variables
     private String projectName;
     private String uuid;
-    private byte[] uuid_bytes;
+    private byte[] uuidBytes;
     private String releasedDate;
     private String enabledDate;
     private int keys;
@@ -73,15 +79,17 @@ public class AuthKey {
         long leastSignificantBits = randomUUID.getLeastSignificantBits();
         long mostSignificantBits = randomUUID.getMostSignificantBits();
 
-        ByteBuffer networkByteBuffer = ByteBuffer.allocate(UUID_BYTES);
+        ByteBuffer networkByteBuffer = ByteBuffer.allocate(AUTHKEY_UUID_BYTES);
         networkByteBuffer.order(ByteOrder.BIG_ENDIAN);
         networkByteBuffer.putLong(mostSignificantBits);
         networkByteBuffer.putLong(leastSignificantBits);
-        uuid_bytes = networkByteBuffer.array();
-        uuid = Utils.bytesToHex(uuid_bytes);
+        uuidBytes = networkByteBuffer.array();
+        uuid = Utils.bytesToHex(uuidBytes);
 
-        releasedDate = (new Date()).toString();
+        releasedDate = Utils.getDateTime();
         keys = numberOfKeys;
+        keypairTimestamp = 0;
+        keypairKeyNum = 0;
         flags = 0;
 
 
@@ -130,7 +138,9 @@ public class AuthKey {
         return keypairTimestamp;
     }
 
-    public final int getKeypairKeyNum() { return keypairKeyNum;}
+    public final int getKeypairKeyNum() {
+        return keypairKeyNum;
+    }
 
 
     //endregion
@@ -142,19 +152,40 @@ public class AuthKey {
     //endregion
 
     //region public functions
-    public boolean export(String file, boolean overwrite) throws UnsupportedEncodingException {
-        File fs = new File(file);
-
-        if (fs.exists() && !overwrite)
-            return false;
+    public byte[] export() throws UnsupportedEncodingException {
 
         ByteBuffer authkeyByteBuffer = ByteBuffer.allocate(AUTHKEY_SIZE);
-        authkeyByteBuffer.clear();
+        authkeyByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        byte[] id = Arrays.copyOf(AUTHKEY_ID.getBytes("ISO-8859-1"), AUTHKEY_ID_BYTES);
-        authkeyByteBuffer.put(id);
+        authkeyByteBuffer.put(Arrays.copyOf(AUTHKEY_ID.getBytes(CHARSETENC), AUTHKEY_ID_BYTES));
+        authkeyByteBuffer.put(Arrays.copyOf(projectName.getBytes(CHARSETENC), AUTHKEY_PRJNAME_BYTES));
+        authkeyByteBuffer.put(uuidBytes);
+        authkeyByteBuffer.put(Arrays.copyOf(releasedDate.getBytes(CHARSETENC), AUTHKEY_DATETIME_BYTES));
 
-        return true;
+        byte[] enabledDatePadding = new byte[AUTHKEY_DATETIME_BYTES];
+        Arrays.fill(enabledDatePadding, (byte) 0);
+        authkeyByteBuffer.put(enabledDatePadding);
+
+        authkeyByteBuffer.putInt(keys);
+        authkeyByteBuffer.putInt(flags);
+        authkeyByteBuffer.putLong(keypairTimestamp);
+        authkeyByteBuffer.putInt(keypairKeyNum);
+
+        byte[] padding = new byte[AUTHKEY_PADDING_BYTES];
+        Arrays.fill(padding, (byte) 0);
+        authkeyByteBuffer.put(padding);
+
+//        try {
+//            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(fs));
+//            out.write(authkeyByteBuffer.array(), 0, AUTHKEY_SIZE);
+//            out.close();
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return null;
+//        }
+
+        return authkeyByteBuffer.array();
     }
     //endregion
 
