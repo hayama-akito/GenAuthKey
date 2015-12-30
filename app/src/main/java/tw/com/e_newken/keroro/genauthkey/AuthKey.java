@@ -1,7 +1,5 @@
 package tw.com.e_newken.keroro.genauthkey;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,19 +11,21 @@ import java.util.UUID;
  */
 public class AuthKey {
 
-    //NOTICE: authkey 144-bytes
-//    struct authkey {
-//        char id[16];
-//        char prj_name[16];
-//        char uuid[16];
-//        char release_date[32];
-//        char enable_date[32];
-//        int num_keys;
-//        unsigned int flags;
-//        unsigned long keypair_timestamp;
-//        int keypair_key_num;
-//        char reserved[12];
-//    };
+    /*
+NOTICE: authkey 144-bytes
+struct authkey {
+char id[16];
+char prj_name[16];
+char uuid[16];
+char release_date[32];
+char enable_date[32];
+int num_keys;
+unsigned int flags;
+unsigned long keypair_timestamp;
+int keypair_key_num;
+char reserved[12];
+};
+*/
 
 
     //region final parameters
@@ -61,6 +61,7 @@ public class AuthKey {
     private int flags;
     private long keypairTimestamp;
     private int keypairKeyNum;
+
     //endregion
 
     //region Constructor
@@ -92,20 +93,16 @@ public class AuthKey {
         keypairKeyNum = 0;
         flags = 0;
 
-
     }
 
-    public AuthKey(String file, String aes_iv) throws FileNotFoundException {
-        File fs = new File(file);
-
-        if (!fs.exists()) {
-            throw new FileNotFoundException();
+    public AuthKey(byte[] authkeyBytes) {
+        if (authkeyBytes.length != AUTHKEY_SIZE) {
+            throw new IllegalArgumentException("Length incorrect");
         }
 
-        if (aes_iv == null) {
-            throw new NullPointerException();
+        if (!parse(authkeyBytes)) {
+            throw new IllegalArgumentException("Parse fail");
         }
-
     }
     //endregion
 
@@ -116,6 +113,10 @@ public class AuthKey {
 
     public final String getUUID() {
         return uuid;
+    }
+
+    public final byte[] getUUIDBytes() {
+        return uuidBytes;
     }
 
     public final String getReleasedDate() {
@@ -142,11 +143,46 @@ public class AuthKey {
         return keypairKeyNum;
     }
 
+    public final boolean isEnable() {
+        return ((flags & F_AUTHKEY_ENABLE) != 0);
+    }
+
+    public final boolean isLock() {
+        return ((flags & F_AUTHKEY_LOCK) != 0);
+    }
+
+    public final boolean isNoKeys() {
+        return ((flags & F_AUTHKEY_NO_KEYS) != 0);
+    }
+
+    public final boolean isCritical() {
+        return ((flags & F_AUTHKEY_CRITICAL) != 0);
+    }
 
     //endregion
 
     //region private functions
-    private boolean parser() {
+    private boolean parse(byte[] authkeyBytes) {
+        String id = new String(Arrays.copyOfRange(authkeyBytes, 0, AUTHKEY_ID_BYTES));
+        if (id != AUTHKEY_ID)
+            return false;
+
+        projectName = new String(Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES, AUTHKEY_PRJNAME_BYTES));
+        uuidBytes = Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES, AUTHKEY_UUID_BYTES);
+        uuid = Utils.bytesToHex(uuidBytes);
+        releasedDate = new String(Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES + AUTHKEY_UUID_BYTES,
+                AUTHKEY_DATETIME_BYTES));
+        enabledDate = new String(Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES + AUTHKEY_UUID_BYTES + AUTHKEY_DATETIME_BYTES,
+                AUTHKEY_DATETIME_BYTES));
+
+        int ofs = AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES + AUTHKEY_UUID_BYTES + (AUTHKEY_DATETIME_BYTES * 2);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(authkeyBytes, ofs, AUTHKEY_SIZE - ofs);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        keys = byteBuffer.getInt();
+        flags = byteBuffer.getInt();
+        keypairTimestamp = byteBuffer.getLong();
+        keypairKeyNum = byteBuffer.getInt();
+
         return true;
     }
     //endregion
