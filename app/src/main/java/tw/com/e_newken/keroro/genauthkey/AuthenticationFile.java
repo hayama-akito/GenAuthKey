@@ -2,9 +2,8 @@ package tw.com.e_newken.keroro.genauthkey;
 
 
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Environment;
 import android.util.Log;
 
 import org.xml.sax.SAXException;
@@ -24,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 public class AuthenticationFile {
     //region final parameters
     private final String TAG = "AuthenticationFile";
+    private final String FOLDER = "NewKen_Auth";
     private final String PLATFORMS_FILE = "/platforms.xml";
 
     //endregion
@@ -37,11 +37,20 @@ public class AuthenticationFile {
     //endregion
 
     //region Constructor
-    public AuthenticationFile(Context context) throws NameNotFoundException {
-        PackageManager m = context.getPackageManager();
-        String s = context.getPackageName();
-        PackageInfo p = m.getPackageInfo(s, 0);
-        defaultDirectory = p.applicationInfo.dataDir;
+    public AuthenticationFile() throws NameNotFoundException, IOException {
+        if (!Utils.isExternalStorageWritable()) {
+            throw new IOException("ExternalStorage is not writable");
+        }
+
+        File externalFolder = new File(Environment.getExternalStorageDirectory().getParentFile() + "/" + FOLDER);
+        defaultDirectory = externalFolder.getParent();
+
+        if (!externalFolder.exists()) {
+            if (!externalFolder.mkdir())
+                throw new IOException("Create directory fail");
+        }
+
+
     }
     //endregion
 

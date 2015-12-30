@@ -85,7 +85,7 @@ char reserved[12];
         networkByteBuffer.putLong(mostSignificantBits);
         networkByteBuffer.putLong(leastSignificantBits);
         uuidBytes = networkByteBuffer.array();
-        uuid = Utils.bytesToHex(uuidBytes);
+        uuid = Utils.BytesToHex(uuidBytes);
 
         releasedDate = Utils.getDateTime();
         keys = numberOfKeys;
@@ -169,7 +169,7 @@ char reserved[12];
 
         projectName = new String(Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES, AUTHKEY_PRJNAME_BYTES));
         uuidBytes = Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES, AUTHKEY_UUID_BYTES);
-        uuid = Utils.bytesToHex(uuidBytes);
+        uuid = Utils.BytesToHex(uuidBytes);
         releasedDate = new String(Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES + AUTHKEY_UUID_BYTES,
                 AUTHKEY_DATETIME_BYTES));
         enabledDate = new String(Arrays.copyOfRange(authkeyBytes, AUTHKEY_ID_BYTES + AUTHKEY_PRJNAME_BYTES + AUTHKEY_UUID_BYTES + AUTHKEY_DATETIME_BYTES,

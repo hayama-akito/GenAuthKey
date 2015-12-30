@@ -1,5 +1,7 @@
 package tw.com.e_newken.keroro.genauthkey;
 
+import android.os.Environment;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -11,7 +13,8 @@ public final class Utils {
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     //endregion
 
-    public static String bytesToHex(byte[] bytes) {
+    //region public static functions
+    public static String BytesToHex(byte[] bytes) {
         final char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8',
                 '9', 'A', 'B', 'C', 'D', 'E', 'F'};
         char[] hexChars = new char[bytes.length * 2];
@@ -24,10 +27,42 @@ public final class Utils {
         return new String(hexChars);
     }
 
+    public static byte[] HexStringToByteArray(String hexString) {
+        int len = hexString.length();
+        if ((len % 2) != 0) {
+            throw new IllegalArgumentException("hexString is not multiples of 2");
+        }
+        byte[] data = new byte[len / 2];
+
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4) + Character.digit(hexString.charAt(i + 1), 16));
+        }
+
+        return data;
+    }
+
     public static String getDateTime() {
         Date date = new Date();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
         return simpleDateFormat.format(date);
     }
+
+    public static boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+    //endregion
 
 }

@@ -6,6 +6,10 @@ import java.io.UnsupportedEncodingException;
  * Created by keroro on 2015/12/24.
  */
 public class PlatformInfo {
+    //region private final
+    private static final String CHARSETENC = "ISO-8859-1";
+    //endregion
+
     //region private variables
     private String name;
     private String createDate;
@@ -15,13 +19,17 @@ public class PlatformInfo {
     //endregion
 
     //region Constructor
+    public PlatformInfo(String name) {
+
+    }
+
     public PlatformInfo(String name, String createDate, String characteristic, String comment) throws UnsupportedEncodingException {
         name = new String(name);
         createDate = new String(createDate);
         characteristic = new String(characteristic);
         comment = new String(comment);
 
-        characteristicBytes = characteristic.getBytes("UTF-8");
+        characteristicBytes = characteristic.getBytes(CHARSETENC);
     }
     //endregion
 
